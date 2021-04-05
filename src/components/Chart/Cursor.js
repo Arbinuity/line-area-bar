@@ -5,10 +5,10 @@ import styled from "styled-components";
 import { animation, color, size } from "../../styles/constants";
 
 const StyledCursor = styled.svg.attrs(props => ({
-  // opacity: props.visible ? 1 : 0,
-  style: {
-    opacity: props.visible ? 1 : 0,
-  },
+	// opacity: props.visible ? 1 : 0,
+	style: {
+		opacity: props.visible ? 1 : 0,
+	},
 }))`
   height: 100%;
   width: 100%;
@@ -28,17 +28,17 @@ const Line = styled.line`
 `;
 
 const Cursor = ({ height, visible, x, y }) => (
-  <StyledCursor data-testid="Cursor" visible={visible}>
-    <Line x1={x} x2={x} y1={0} y2={height} />
-    <Circle cx={x} cy={y} />
-  </StyledCursor>
+	<StyledCursor data-testid="Cursor" visible={visible}>
+		<Line x1={x} x2={x} y1={0} y2={height} />
+		<Circle cx={x} cy={y} />
+	</StyledCursor>
 );
 
 Cursor.propTypes = {
-  height: PropTypes.number.isRequired,
-  visible: PropTypes.bool.isRequired,
-  x: PropTypes.number.isRequired,
-  y: PropTypes.number.isRequired,
+	x: PropTypes.number.isRequired,
+	y: PropTypes.number.isRequired,
+	visible: PropTypes.bool.isRequired,
+	height: PropTypes.number.isRequired,
 };
 
 export default Cursor;

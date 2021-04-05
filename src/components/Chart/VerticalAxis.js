@@ -1,14 +1,14 @@
 import React from "react";
-import currencyFormatter from "currency-formatter";
 import { extent } from "d3-array";
 import styled from "styled-components";
+import currencyFormatter from "currency-formatter";
 
 import Flex from "../Flex";
-import { color, fontSize, fontWeight } from "../../styles/constants";
 import { PROPTYPES } from "../../constants";
+import { color, fontSize, fontWeight } from "../../styles/constants";
 
 const StyledVerticalAxis = styled(Flex).attrs(props => ({
-  alignItems: props.align === "right" ? "flex-end" : "flex-start",
+	alignItems: props.align === "right" ? "flex-end" : "flex-start",
 }))`
   background-color: transparent;
   align-items: ${props => props.alignItems};
@@ -26,21 +26,22 @@ const Tick = styled(Flex)`
 `;
 
 const VerticalAxis = ({ data, align, currency }) => {
-  const formatPrice = price => currencyFormatter.format(price, { code: currency, precision: 0 });
-  const [minPrice, maxPrice] = extent(data, d => d.price);
 
-  return (
-    <StyledVerticalAxis data-testid="VerticalAxis" column justify="space-between" align={align}>
-      {maxPrice && <Tick>{formatPrice(maxPrice)}</Tick>}
-      {minPrice && <Tick>{formatPrice(minPrice)}</Tick>}
-    </StyledVerticalAxis>
-  );
+	const formatPrice = price => currencyFormatter.format(price, { code: currency, precision: 0 });
+	const [ minPrice, maxPrice ] = extent(data, d => d.price);
+
+	return (
+		<StyledVerticalAxis data-testid="VerticalAxis" column justify="space-between" align={align}>
+			{maxPrice && <Tick>{formatPrice(maxPrice)}</Tick>}
+			{minPrice && <Tick>{formatPrice(minPrice)}</Tick>}
+		</StyledVerticalAxis>
+	);
 };
 
 VerticalAxis.propTypes = {
-  currency: PROPTYPES.CURRENCY.isRequired,
-  data: PROPTYPES.PRICE_DATA.isRequired,
-  align: PROPTYPES.ALIGNMENT.isRequired,
+	data: PROPTYPES.PRICE_DATA.isRequired,
+	align: PROPTYPES.ALIGNMENT.isRequired,
+	currency: PROPTYPES.CURRENCY.isRequired,
 };
 
 export default VerticalAxis;

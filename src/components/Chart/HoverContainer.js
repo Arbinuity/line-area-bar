@@ -10,12 +10,12 @@ const HOVER_CONTAINER_WIDTH = 200;
 export const VERTICAL_OFFSET = -12;
 
 const StyledHoverContainer = styled(Flex).attrs(props => ({
-  style: {
-    bottom: props.position === "bottom" ? `${VERTICAL_OFFSET}px` : undefined,
-    top: props.position === "top" ? `${VERTICAL_OFFSET}px` : undefined,
-    left: `${props.left - HOVER_CONTAINER_WIDTH / 2}px`,
-    opacity: props.visible ? 1 : 0,
-  },
+	style: {
+		opacity: props.visible ? 1 : 0,
+		left: `${props.left - HOVER_CONTAINER_WIDTH / 2}px`,
+		top: props.position === "top" ? `${VERTICAL_OFFSET}px` : undefined,
+		bottom: props.position === "bottom" ? `${VERTICAL_OFFSET}px` : undefined,
+	},
 }))`
   position: absolute;
   transition: opacity ${animation.speed};
@@ -24,9 +24,9 @@ const StyledHoverContainer = styled(Flex).attrs(props => ({
 `;
 
 const Label = styled.div.attrs(props => ({
-  background: props.invertColor ? color.coinchartsGray : color.white,
-  border: props.invertColor ? "none" : border.border,
-  color: props.invertColor ? color.white : color.coinchartsGray,
+	border: props.invertColor ? "none" : border.border,
+	color: props.invertColor ? color.white : color.coinchartsGray,
+	background: props.invertColor ? color.coinchartsGray : color.white,
 }))`
   background: ${props => props.background};
   border-radius: ${border.radius};
@@ -38,20 +38,22 @@ const Label = styled.div.attrs(props => ({
 `;
 
 const HoverContainer = ({ position, label, visible, x }) => (
-  <StyledHoverContainer data-testid="HoverContainer" justify="center" left={x} position={position} visible={visible}>
-    <Label invertColor={position === "top"}>{label}</Label>
-  </StyledHoverContainer>
+	<StyledHoverContainer data-testid="HoverContainer" justify="center" left={x} position={position} visible={visible}>
+		<Label invertColor={position === "top"}>
+			{label}
+		</Label>
+	</StyledHoverContainer>
 );
 
 HoverContainer.propTypes = {
-  position: PROPTYPES.HOVER_CONTAINER_POSITION.isRequired,
-  visible: PropTypes.bool.isRequired,
-  x: PropTypes.number.isRequired,
-  label: PropTypes.string,
+	label: PropTypes.string,
+	x: PropTypes.number.isRequired,
+	visible: PropTypes.bool.isRequired,
+	position: PROPTYPES.HOVER_CONTAINER_POSITION.isRequired,
 };
 
 HoverContainer.defaultProps = {
-  label: "",
+	label: "",
 };
 
 export default HoverContainer;

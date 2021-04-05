@@ -1,22 +1,21 @@
 /* eslint-disable class-methods-use-this */
 import PropTypes from "prop-types";
-import React, { Component } from "react";
 import { connect } from "react-redux";
-import MediaQuery from "react-responsive";
 import styled from "styled-components";
+import MediaQuery from "react-responsive";
+import React, { useState, useEffect } from "react";
 
-import { POLL_FREQUENCY } from "../../constants";
-import { border, boxShadow, color, font, fontSize, fontWeight, height, width } from "../../styles/constants";
-import { PriceActions } from "../../store/price";
 import Flex from "../../components/Flex";
 import Footer from "../../components/Footer";
-import GithubBanner from "../../components/GithubBanner";
-import DocumentHead from "../../containers/DocumentHead";
-import CryptocurrencyTabs from "../../containers/CryptocurrencyTabs";
-import DurationTabs from "../../containers/DurationTabs";
+import { POLL_FREQUENCY } from "../../constants";
+import { PriceActions } from "../../store/price";
 import PriceChart from "../../containers/PriceChart";
 import PriceTable from "../../containers/PriceTable";
+import DocumentHead from "../../containers/DocumentHead";
+import DurationTabs from "../../containers/DurationTabs";
 import PriceTableCompact from "../../containers/PriceTableCompact";
+import CryptocurrencyTabs from "../../containers/CryptocurrencyTabs";
+import { border, boxShadow, color, font, fontSize, fontWeight, height, width } from "../../styles/constants";
 
 const Dashboard = styled(Flex)`
   background-color: ${color.white};
@@ -55,89 +54,104 @@ const StyledMainView = styled(Flex)`
   margin: auto;
 `;
 
-class MainView extends Component {
-  componentDidMount() {
-    this.initialTimeout = setTimeout(() => {
-      this.fetchPriceData();
-      this.startPriceDataPolling();
-    }, 100);
-  }
+const MainView = (props) => {
 
-  componentWillUnmount() {
-    this.clearPriceDataPolling();
-  }
+	const { data, requestPriceData } = props;
 
-  startPriceDataPolling() {
-    this.pollingId = setInterval(() => {
-      this.fetchPriceData();
-    }, POLL_FREQUENCY);
-  }
+	// let pollingId = null;
+	// let initialTimeout = null;
 
-  clearPriceDataPolling() {
-    clearTimeout(this.initialTimeout);
-    clearInterval(this.pollingId);
-  }
+	// const startPriceDataPolling = () => {
+	// 	pollingId = setInterval(() => {
+	// 		requestPriceData();
+	// 	}, POLL_FREQUENCY);
+	// }
 
-  fetchPriceData() {
-    const { requestPriceData } = this.props;
-    requestPriceData();
-  }
+	// const clearPriceDataPolling = () => {
+	// 	clearTimeout(initialTimeout);
+	// 	clearInterval(pollingId);
+	// }
 
-  renderMobile() {
-    return (
-      <Dashboard column>
-        <StyledHeader justify="space-between">
-          <HeaderText center>Coincharts</HeaderText>
-          <DurationTabs />
-        </StyledHeader>
-        <StyledBody>
-          <PriceTableCompact />
-          <PriceChart disableCursor hideRightVerticalAxis hideTopBorder horizontalAxisTickCount={4} />
-        </StyledBody>
-      </Dashboard>
-    );
-  }
+	// useEffect(() => {
+	// 	initialTimeout = setTimeout(() => {
+	// 		requestPriceData();
+	// 		startPriceDataPolling();
+	// 	}, 100);
 
-  renderDesktop() {
-    return (
-      <DashboardDesktop column>
-        <StyledHeader justify="space-between">
-          <CryptocurrencyTabs />
-          <DurationTabs />
-        </StyledHeader>
-        <StyledBody>
-          <PriceTable />
-          <PriceChart />
-        </StyledBody>
-      </DashboardDesktop>
-    );
-  }
+	// 	return () => {
+	// 		clearPriceDataPolling();
+	// 	}
+	// }, []);
 
-  render() {
-    return (
-      <StyledMainView center column>
-        <DocumentHead />
-        <GithubBanner />
-        <MediaQuery maxWidth={width.desktopMin}>
-          {matches => (matches ? this.renderMobile() : this.renderDesktop())}
-        </MediaQuery>
-        <Footer />
-      </StyledMainView>
-    );
-  }
+	const renderMobile = () => (
+		<Dashboard column>
+			{/*
+			<StyledHeader justify="space-between">
+				<HeaderText center>Coincharts</HeaderText>
+				<DurationTabs />
+			</StyledHeader>
+			*/}
+			<StyledBody>
+				{/*
+				<PriceTableCompact />
+				<PriceChart 
+					horizontalAxisTickCount={4} 
+					hideRightVerticalAxis 
+					disableCursor 
+					hideTopBorder 
+					data={data}
+				/>
+				*/}
+				<PriceChart 
+					horizontalAxisTickCount={4} 
+					hideRightVerticalAxis 
+					disableCursor 
+					hideTopBorder 
+				/>
+			</StyledBody>
+		</Dashboard>
+	);
+
+	const renderDesktop = () => (
+		<DashboardDesktop column>
+			{/*
+			<StyledHeader justify="space-between">
+				<CryptocurrencyTabs />
+				<DurationTabs />
+			</StyledHeader>
+			*/}
+			<StyledBody>
+				{/*
+				<PriceTable />
+				*/}
+				<PriceChart data={data} />
+			</StyledBody>
+		</DashboardDesktop>
+	);
+
+	return (
+		<StyledMainView center column>
+			<DocumentHead />
+			<MediaQuery maxWidth={width.desktopMin}>
+				{matches => (matches ? renderMobile() : renderDesktop())}
+			</MediaQuery>
+			<Footer />
+		</StyledMainView>
+	);
 }
 
 const mapDispatchToProps = dispatch => ({
-  requestPriceData: () => {
-    dispatch(PriceActions.request());
-  },
+	requestPriceData: () => {
+		dispatch(PriceActions.request());
+	},
 });
 
 MainView.propTypes = {
-  requestPriceData: PropTypes.func.isRequired,
+	requestPriceData: PropTypes.func.isRequired,
 };
 
 // Use named export for tests
 export { MainView as UnconnectedMainView, mapDispatchToProps };
 
-export default connect(null, mapDispatchToProps)(MainView);
+// export default connect(null, mapDispatchToProps)(MainView);
+export default MainView;

@@ -1,30 +1,20 @@
-import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { extent } from "d3-array";
 import { scaleLinear } from "d3-scale";
-import currencyFormatter from "currency-formatter";
 import styled from "styled-components";
+import currencyFormatter from "currency-formatter";
+import React, { useState, useEffect, useRef } from "react";
 
-import { border } from "../../styles/constants";
-import { PROPTYPES } from "../../constants";
 import Flex from "../Flex";
 import Cursor from "./Cursor";
-import Graph, { GRAPH_PADDING_BOTTOM, GRAPH_PADDING_TOP } from "./Graph";
+import VerticalAxis from "./VerticalAxis";
+import { PROPTYPES } from "../../constants";
 import HorizontalAxis from "./HorizontalAxis";
 import HoverContainer from "./HoverContainer";
-import VerticalAxis from "./VerticalAxis";
+import { border } from "../../styles/constants";
+import Graph, { GRAPH_PADDING_BOTTOM, GRAPH_PADDING_TOP } from "./Graph";
 
 const DEFAULT_TICK_COUNT = 7;
-const INITIAL_STATE = {
-  dimensions: {
-    height: 0,
-    width: 0,
-  },
-  hovered: false,
-  hoveredValue: {},
-  hoverX: -1,
-  hoverY: -1,
-};
 
 const StyledChart = styled.div`
   cursor: crosshair;
@@ -44,145 +34,171 @@ const StyledChartWithVerticalAxis = styled(Flex)`
   height: 225px;
 `;
 
-class Chart extends Component {
-  constructor(props) {
-    super(props);
-    this.state = INITIAL_STATE;
-    this.chartRef = React.createRef();
+const useDidMount = () => {
+	const didMountRef = useRef(true);
+	useEffect(() => {
+		didMountRef.current = false;
+	}, []);
+	return didMountRef.current;
+};
 
-    // Bind event-handlers
-    this.handleResize = this.handleResize.bind(this);
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
-  }
+const Chart = (props) => {
 
-  componentDidMount() {
-    window.addEventListener("resize", this.handleResize);
-    this.handleResize();
-  }
+	const {
+		data,
+		color,
+		currency,
+		durationType,
+		disableCursor,
+		hideLeftVerticalAxis,
+		hideRightVerticalAxis,
+		horizontalAxisTickCount,
+	} = props;
 
-  shouldComponentUpdate(nextProps) {
-    const { isLoading } = nextProps;
-    return !isLoading;
-  }
+	console.log('MC:::', data)
+	const didMount = useDidMount();
 
-  componentWillUnmount() {
-    window.removeEventListener("resize", this.handleResize);
-  }
+	const chartRef = useRef();
 
-  handleResize() {
-    const { height, width } = this.chartRef.current.getBoundingClientRect();
-    const dimensions = {
-      height: Math.round(height),
-      width: Math.round(width),
-    };
+	const [ hoverX, setHoverX ] = useState(-1);
+	const [ hoverY, setHoverY ] = useState(-1);
+	const [ hovered, setHovered ] = useState(false);
+	const [ dimensions, setDimensions ] = useState({
+		height: 0, width: 0,
+	});
+	const [ hoveredValue, setHoveredValue ] = useState({});
 
-    this.setState({ dimensions });
-  }
+	const handleResize = () => {
+		const { height, width } = chartRef.current.getBoundingClientRect();
+		console.log('ACTIVE:::', height, width)
+		setDimensions({
+			width: Math.round(width),
+			height: Math.round(height),
+		});
+	};
 
-  // Show hover elements
-  handleMouseEnter() {
-    this.setState({ hovered: true });
-  }
+	useEffect(() => {
+		console.log('A', chartRef.current)
+		if (didMount) {
+			window.addEventListener("resize", handleResize);
+			handleResize();
+		}
 
-  // Hide hover elements
-  handleMouseLeave() {
-    this.setState({ hovered: false });
-  }
+		return () => {
+			window.removeEventListener("resize", handleResize);
+		}
+	}, []);
 
-  // Update hover position
-  handleMouseMove(e) {
-    const { data, currency } = this.props;
+	// Show hover elements
+	const handleMouseEnter = () => setHovered(true);
 
-    // Find closest data point to the x-coordinates of where the user's mouse is hovering
-    const hoverX = e.nativeEvent.clientX - this.chartRef.current.getBoundingClientRect().left;
+	// Hide hover elements
+	const handleMouseLeave = () => setHovered(false);
 
-    this.setState(prevState => {
-      const { dimensions } = prevState;
-      const index = Math.round((hoverX / dimensions.width) * (data.length - 1));
-      const hoveredDatapoint = data[index] || {};
-      const hoveredValue = {
-        price: hoveredDatapoint.price && currencyFormatter.format(hoveredDatapoint.price, { code: currency }),
-        time: hoveredDatapoint.time && hoveredDatapoint.time.toLocaleString(),
-      };
+	// Update hover position
+	const handleMouseMove = (e) => {
+		const { data, currency } = props;
 
-      const scalePriceToY = scaleLinear()
-        .range([dimensions.height - GRAPH_PADDING_BOTTOM, GRAPH_PADDING_TOP])
-        .domain(extent(data, d => d.price));
-      const hoverY = scalePriceToY(hoveredDatapoint.price) || 0;
+		// Find closest data point to the x-coordinates of where the user's mouse is hovering
+		const hoverX = e.nativeEvent.clientX - chartRef.current.getBoundingClientRect().left;
 
-      return {
-        hovered: Boolean(hoveredDatapoint),
-        hoveredValue,
-        hoverX,
-        hoverY,
-      };
-    });
-  }
+		setDimensions((prevDimensions) => {
+			const index = Math.round((hoverX / prevDimensions.width) * (data[0].length - 1));
+			const hoveredDatapoint = data[0][index] || {};
+			const hoveredValue = {
+				price: hoveredDatapoint.price && currencyFormatter.format(hoveredDatapoint.price, { code: currency }),
+				time: hoveredDatapoint.time && hoveredDatapoint.time.toLocaleString(),
+			};
 
-  render() {
-    const {
-      dimensions,
-      hoveredValue: { price, time },
-      hoverX,
-      hoverY,
-      hovered,
-    } = this.state;
-    const {
-      color,
-      currency,
-      data,
-      durationType,
-      disableCursor,
-      hideRightVerticalAxis,
-      horizontalAxisTickCount,
-    } = this.props;
+			const scalePriceToY = scaleLinear()
+				.range([prevDimensions.height - GRAPH_PADDING_BOTTOM, GRAPH_PADDING_TOP])
+				.domain(extent(data[0], d => new Date(d.price)));
+			const hoverY = scalePriceToY(hoveredDatapoint.price) || 0;
 
-    return (
-      <div>
-        <StyledChartWithVerticalAxis>
-          <VerticalAxis data={data} currency={currency} align="left" />
-          <StyledChart
-            data-testid="HoverRegion"
-            onMouseEnter={this.handleMouseEnter}
-            onMouseLeave={this.handleMouseLeave}
-            onMouseMove={this.handleMouseMove}
-            ref={this.chartRef}
-          >
-            <Graph color={color} data={data} height={dimensions.height} width={dimensions.width} />
-            {!disableCursor && <Cursor height={dimensions.height} visible={hovered} x={hoverX} y={hoverY} />}
-            {!disableCursor && <HoverContainer position="top" label={price} visible={hovered} x={hoverX} />}
-            {!disableCursor && <HoverContainer position="bottom" label={time} visible={hovered} x={hoverX} />}
-          </StyledChart>
-          {!hideRightVerticalAxis && <VerticalAxis data={data} currency={currency} align="right" />}
-        </StyledChartWithVerticalAxis>
-        <HorizontalAxis
-          data={data}
-          duration={durationType}
-          hideRightMargin={hideRightVerticalAxis}
-          tickCount={horizontalAxisTickCount}
-        />
-      </div>
-    );
-  }
+			setHoverX(hoverX);
+			setHoverY(hoverY);
+			setHoveredValue(hoveredValue);
+			setHovered(Boolean(hoveredDatapoint));
+
+			return prevDimensions;
+		});
+	}
+
+	console.log('DIM:::', dimensions)
+
+	return (
+		<>
+			<StyledChartWithVerticalAxis>
+				{(!hideLeftVerticalAxis) && (
+					<VerticalAxis 
+						currency={currency} 
+						data={data[0]} 
+						align="left" 
+					/>
+				)}
+				<StyledChart
+					data-testid="HoverRegion"
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
+					onMouseMove={handleMouseMove}
+					ref={chartRef}
+				>
+					<Graph 
+						height={dimensions.height} 
+						width={dimensions.width} 
+						color={color} 
+						data={data[0]}
+					/>
+					{!disableCursor && (
+						<>
+							<Cursor height={dimensions.height} visible={hovered} x={hoverX} y={hoverY} />
+							<HoverContainer position="top" label={hoveredValue.price} visible={hovered} x={hoverX} />
+							<HoverContainer position="bottom" label={hoveredValue.time} visible={hovered} x={hoverX} />
+						</>
+					)}
+				</StyledChart>
+				{(!hideRightVerticalAxis) && (
+					<VerticalAxis 
+						currency={currency} 
+						data={data[0]} 
+						align="right" 
+					/>
+				)}
+			</StyledChartWithVerticalAxis>
+			<HorizontalAxis
+				hideRightMargin={hideRightVerticalAxis}
+				tickCount={horizontalAxisTickCount}
+				duration={durationType}
+				data={data[0]}
+			/>
+		</>
+	);
 }
 
 Chart.propTypes = {
-  color: PROPTYPES.COLOR.isRequired,
-  currency: PROPTYPES.CURRENCY.isRequired,
-  data: PROPTYPES.PRICE_DATA.isRequired,
-  durationType: PROPTYPES.DURATION.isRequired,
-  isLoading: PropTypes.bool.isRequired,
-  disableCursor: PropTypes.bool,
-  hideRightVerticalAxis: PropTypes.bool,
-  horizontalAxisTickCount: PropTypes.number,
+	disableCursor: PropTypes.bool,
+	color: PROPTYPES.COLOR.isRequired,
+	isLoading: PropTypes.bool.isRequired,
+	hideLeftVerticalAxis: PropTypes.bool,
+	hideRightVerticalAxis: PropTypes.bool,
+	data: PROPTYPES.PRICE_DATA.isRequired,
+	currency: PROPTYPES.CURRENCY.isRequired,
+	horizontalAxisTickCount: PropTypes.number,
+	durationType: PROPTYPES.DURATION.isRequired,
 };
 
 Chart.defaultProps = {
-  disableCursor: false,
-  hideRightVerticalAxis: false,
-  horizontalAxisTickCount: DEFAULT_TICK_COUNT,
+	disableCursor: false,
+	hideLeftVerticalAxis: false,
+	hideRightVerticalAxis: true,
+	horizontalAxisTickCount: DEFAULT_TICK_COUNT,
 };
+
+React.memo(function ChartWrapper (props) {
+	const { isLoading } = props;
+	return (
+		<Chart isLoading={!isLoading} />
+	);
+}) 
 
 export default Chart;
